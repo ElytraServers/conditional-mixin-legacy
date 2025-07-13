@@ -1,5 +1,6 @@
 {
   "required": true,
   "package": "com.myname.mymodid.mixins",
-  "plugin": "com.myname.mymodid.MyMixinConfigPlugin"
+  "plugin": "com.myname.mymodid.MyMixinConfigPlugin",
+  "refmap": "mixins.mymodid.refmap.json"
 }
