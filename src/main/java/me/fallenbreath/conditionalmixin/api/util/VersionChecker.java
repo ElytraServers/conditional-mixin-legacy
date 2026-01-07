@@ -3,6 +3,8 @@ package me.fallenbreath.conditionalmixin.api.util;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.common.versioning.ArtifactVersion;
@@ -40,6 +42,21 @@ public class VersionChecker {
      */
     public static Optional<String> getModVersionString(String modId) {
         return getModContainer(modId).map(ModContainer::getVersion);
+    }
+
+    @ApiStatus.Internal
+    public static String getModVersionStringForDebug(String modId) {
+        Optional<ModContainer> modContainer = getModContainer(modId);
+        if (modContainer.isPresent()) {
+            ModContainer mc = modContainer.get();
+            String version = mc.getVersion();
+            String metadataVersion = "null";
+            if (mc.getMetadata() != null && mc.getMetadata().version != null) {
+                metadataVersion = mc.getMetadata().version;
+            }
+            return String.format("%s(%s)", version, metadataVersion);
+        }
+        return "null";
     }
 
     private static Optional<ArtifactVersion> getModVersion(ModContainer modContainer, boolean useMetadataVersion) {

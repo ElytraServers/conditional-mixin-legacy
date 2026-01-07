@@ -93,8 +93,7 @@ public class SimpleRestrictionChecker implements RestrictionChecker {
                     List<String> versionPredicates = Lists
                         .newArrayList(Annotations.getValue(condition, "versionPredicates", Lists.newArrayList()));
                     // we know the mod is present, so we can unwrap the optional here
-                    String versionString = VersionChecker.getModVersionString(modId)
-                        .orElseThrow(IllegalStateException::new);
+                    String versionString = VersionChecker.getModVersionStringForDebug(modId);
                     if (!VersionChecker.doesModVersionSatisfyPredicate(modId, versionPredicates)) {
                         results.add(
                             new Result(
