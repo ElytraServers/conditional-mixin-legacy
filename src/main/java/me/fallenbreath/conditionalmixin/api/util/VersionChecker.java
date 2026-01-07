@@ -6,10 +6,13 @@ import java.util.Optional;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.common.versioning.ArtifactVersion;
+import cpw.mods.fml.common.versioning.DefaultArtifactVersion;
 import cpw.mods.fml.common.versioning.VersionRange;
 import me.fallenbreath.conditionalmixin.ConditionalMixinMod;
 
 public class VersionChecker {
+
+    public static final String METADATA_VERSION_PREFIX = "metadata:";
 
     private static Optional<ModContainer> getModContainer(String modId) {
         return Loader.instance()
@@ -39,6 +42,17 @@ public class VersionChecker {
         return getModContainer(modId).map(ModContainer::getVersion);
     }
 
+    private static Optional<ArtifactVersion> getModVersion(ModContainer modContainer, boolean useMetadataVersion) {
+        if (useMetadataVersion) {
+            String modId = modContainer.getModId();
+            return Optional.ofNullable(modContainer.getMetadata())
+                .map(metadata -> metadata.version)
+                .map(version -> new DefaultArtifactVersion(modId, version));
+        } else {
+            return Optional.of(modContainer.getProcessedVersion());
+        }
+    }
+
     /**
      * Use the loader's util to check if a given version satisfy a version predicate
      *
@@ -55,17 +69,25 @@ public class VersionChecker {
         if (!modContainer.isPresent()) {
             return false;
         }
-        ArtifactVersion version = modContainer.get()
-            .getProcessedVersion();
+
+        boolean useMetadataVersion = versionPredicate.startsWith(METADATA_VERSION_PREFIX);
+        String versionPredicateRange = useMetadataVersion ? versionPredicate.substring(METADATA_VERSION_PREFIX.length())
+            : versionPredicate;
+        Optional<ArtifactVersion> version = getModVersion(modContainer.get(), useMetadataVersion);
+        if (!version.isPresent()) {
+            ConditionalMixinMod.LOGGER
+                .error("Failed to get version (useMetadataVersion = {}) {}", useMetadataVersion, modContainer);
+            return false;
+        }
 
         try {
-            return VersionRange.createFromVersionSpec(versionPredicate)
-                .containsVersion(version);
+            return VersionRange.createFromVersionSpec(versionPredicateRange)
+                .containsVersion(version.get());
         } catch (Exception e) {
             ConditionalMixinMod.LOGGER.error(
                 "Failed to parse version or version predicate {} {}: {}",
                 version.toString(),
-                versionPredicate,
+                versionPredicateRange,
                 e);
         }
         return false;
